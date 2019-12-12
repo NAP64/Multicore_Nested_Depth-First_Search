@@ -3,3 +3,4 @@
 .vscode
 *.class
 org.eclipse.*
+/bin/
