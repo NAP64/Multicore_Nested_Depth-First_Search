@@ -11,6 +11,8 @@ public class Node implements Comparable<Node>, Iterable<Node> {
     int size;
     boolean accepting;
 
+    Object store;
+
     public Node() {
         array = new Node[32];
         size = 0;
@@ -47,9 +49,14 @@ public class Node implements Comparable<Node>, Iterable<Node> {
         return array;
     }
 
-    public void setup()
+    public void setup(Object o)
     {
-        //implement this for colorint initialization.
+        store = o;
+    }
+
+    public Object getStore()
+    {
+        return store;
     }
 
     public void setAccepting(boolean b)
