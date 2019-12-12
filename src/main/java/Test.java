@@ -31,9 +31,10 @@ public class Test
         for (int i = 0; i < count; i++)
         {
             Node cur = head;
-            while (cur.getSize() > 0 && r.nextInt(100) < passPercent)
-                cur = cur.getArray()[r.nextInt(cur.getSize())];
-            Node n = new Node();
+            while (cur.getSize() > 1 && r.nextInt(100) < passPercent)
+                cur = cur.getArray()[r.nextInt(cur.getSize()) + 1]; //avoid predecessor
+            Node n = new Node(true);
+            n.add(cur); //connect backward
             ll.add(n);
             cur.add(n);
         }

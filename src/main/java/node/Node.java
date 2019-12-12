@@ -9,10 +9,18 @@ public class Node implements Comparable<Node>, Iterable<Node> {
 
     Node[] array;
     int size;
+    boolean accepting;
 
     public Node() {
         array = new Node[32];
         size = 0;
+        accepting = false;
+    }
+    
+    public Node(boolean b) {
+        array = new Node[32];
+        size = 0;
+        accepting = b;
     }
 
     public void add(Node node) {
@@ -42,6 +50,16 @@ public class Node implements Comparable<Node>, Iterable<Node> {
     public void setup()
     {
         //implement this for colorint initialization.
+    }
+
+    public void setAccepting(boolean b)
+    {
+        accepting = b;
+    }
+
+    public boolean isAccepting()
+    {
+        return true;
     }
 
     public int compareTo(Node o) {
