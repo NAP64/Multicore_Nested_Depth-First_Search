@@ -8,8 +8,24 @@ import ndfs.*;
 public class Test {
 	private static final int WARMUPS = 2;
 
+    private static void printUsage() {
+    	System.out.println("");
+        System.out.println("Usage: bin/runtest <graph_size> <thread_count> <iterations> <num_graphs>");
+        System.out.println("  Where:");
+        System.out.println("    <graph_size> is the number of nodes in the graph,");
+        System.out.println("    <thread_count> is the number of threads,");
+        System.out.println("    <iterations> is the number of times to run the test,");
+        System.out.println("    <num_graphs> is the number of graphs to generate.");
+    	System.out.println("");
+    }	
+	
     public static void main(String[] args) throws InterruptedException
     {
+    	if (args.length < 4) {
+    		printUsage();
+    		System.exit(1);
+    	}
+    	
         int graph_size = Integer.parseInt(args[0]);
 		int thread_count = Integer.parseInt(args[1]);
         int iterations = Integer.parseInt(args[2]);
