@@ -22,7 +22,7 @@ public class MC_NDFS2_Thread extends Thread {
 	public static void setup_graph(List<Node> graph, int n)
 	{
 		for (Node i : graph)
-			i.setup(new MC_NDFSS(n));
+			i.setup(new MC_NDFS2S(n));
 	}
 	
 	public void run() {
@@ -42,50 +42,50 @@ public class MC_NDFS2_Thread extends Thread {
 		if (hasCycle)
 			return;
 		boolean allred = true;
-		((MC_NDFSS)s.getStore()).color.set(id, Color.CYAN);
+		((MC_NDFS2S)s.getStore()).color.set(id, Color.CYAN);
 		
 		Iterator<Node> subNodes = s.post();
 		while (subNodes.hasNext()) {
 			Node t = subNodes.next();
-			if (((MC_NDFSS)t.getStore()).color.get(id) == Color.CYAN && (s.isAccepting() || t.isAccepting()))
+			if (((MC_NDFS2S)t.getStore()).color.get(id) == Color.CYAN && (s.isAccepting() || t.isAccepting()))
 			{
 				hasCycle = true;
 				return;
 			}
-			if (((MC_NDFSS)t.getStore()).color.get(id) == Color.WHITE && !((MC_NDFSS)t.getStore()).red.get())
+			if (((MC_NDFS2S)t.getStore()).color.get(id) == Color.WHITE && !((MC_NDFS2S)t.getStore()).red.get())
 				dfs_blue(t);
-			if (!((MC_NDFSS)t.getStore()).red.get())
+			if (!((MC_NDFS2S)t.getStore()).red.get())
 				allred = false;
 		}
 		if (allred)
-			((MC_NDFSS)s.getStore()).red.set(true);
+			((MC_NDFS2S)s.getStore()).red.set(true);
 		else if (s.isAccepting()) {
-			((MC_NDFSS)s.getStore()).count.getAndIncrement();
+			((MC_NDFS2S)s.getStore()).count.getAndIncrement();
 			dfs_red(s);
 		}
-		((MC_NDFSS)s.getStore()).color.set(id, Color.BLUE);
+		((MC_NDFS2S)s.getStore()).color.set(id, Color.BLUE);
 	}
 	
 	private void dfs_red(Node s) {
 		if (hasCycle)
 			return;
-		((MC_NDFSS)s.getStore()).color.set(id, Color.PINK);
+		((MC_NDFS2S)s.getStore()).color.set(id, Color.PINK);
 		Iterator<Node> subNodes = s.post();
 		while (subNodes.hasNext()) {
 			Node t = subNodes.next();
-			if (((MC_NDFSS)t.getStore()).color.get(id) == Color.CYAN) {
+			if (((MC_NDFS2S)t.getStore()).color.get(id) == Color.CYAN) {
 				hasCycle = true;
 				return;
 			}
-			if (((MC_NDFSS)t.getStore()).color.get(id) != Color.PINK && !((MC_NDFSS)t.getStore()).red.get())
+			if (((MC_NDFS2S)t.getStore()).color.get(id) != Color.PINK && !((MC_NDFS2S)t.getStore()).red.get())
 				dfs_red(t);
 		}
 		if (s.isAccepting()) {
-			((MC_NDFSS)s.getStore()).count.getAndDecrement();
-			AtomicInteger target = ((MC_NDFSS)s.getStore()).count;
+			((MC_NDFS2S)s.getStore()).count.getAndDecrement();
+			AtomicInteger target = ((MC_NDFS2S)s.getStore()).count;
 			while (target.get() > 0) {}
 		}
-		((MC_NDFSS)s.getStore()).red.set(true);
+		((MC_NDFS2S)s.getStore()).red.set(true);
 		
 	}
 }
