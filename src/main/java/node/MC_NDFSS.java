@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class MC_NDFSS
 {
-    public AtomicBoolean red;
-    public AtomicInteger count;
+    public volatile AtomicBoolean red;
+    public volatile AtomicInteger count;
     public AtomicReferenceArray<Color> color;
     public AtomicBoolean[] pink;
 
