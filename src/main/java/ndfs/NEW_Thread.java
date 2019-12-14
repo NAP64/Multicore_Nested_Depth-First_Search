@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 
 import node.*;
 
-public class MC_NDFS2_Thread extends Thread {
+public class NEW_Thread extends Thread {
 	private static int ID_GEN=0;
 	
 	private int id;
@@ -19,7 +19,7 @@ public class MC_NDFS2_Thread extends Thread {
 
 	private static volatile boolean hasCycle = false;
 	
-	public MC_NDFS2_Thread(Node graph, AtomicBoolean b) {
+	public NEW_Thread(Node graph, AtomicBoolean b) {
 		id = ID_GEN++;
 		this.graph = graph;
 		color = ThreadLocal.withInitial(new Supplier<HashMap<Node, Color>>() {
@@ -34,7 +34,7 @@ public class MC_NDFS2_Thread extends Thread {
 	public static void setup_graph(List<Node> graph, int n)
 	{
 		for (Node i : graph)
-			i.setup(new MC_NDFS2S(n));
+			i.setup(new NEW(n));
 	}
 	
 	public void run() {
@@ -65,15 +65,16 @@ public class MC_NDFS2_Thread extends Thread {
 				hasCycle = true;
 				return;
 			}
-			if (!color.get().containsKey(t) && !((MC_NDFS2S)t.getStore()).red.get())
+			if (!color.get().containsKey(t) && !((NEW)t.getStore()).red.get()&& !((NEW)t.getStore()).blue.get())
 				dfs_blue(t);
-			if (!((MC_NDFS2S)t.getStore()).red.get())
+			if (!((NEW)t.getStore()).red.get())
 				allred = false;
 		}
+		((NEW)s.getStore()).blue.set(true);
 		if (allred)
-			((MC_NDFS2S)s.getStore()).red.set(true);
+			((NEW)s.getStore()).red.set(true);
 		else if (s.isAccepting()) {
-			((MC_NDFS2S)s.getStore()).count.getAndIncrement();
+			((NEW)s.getStore()).count.getAndIncrement();
 			dfs_red(s);
 		}
 		color.get().put(s, Color.BLUE);
@@ -90,15 +91,15 @@ public class MC_NDFS2_Thread extends Thread {
 				hasCycle = true;
 				return;
 			}
-			if (color.get().containsKey(t) && color.get().get(t) != Color.PINK && !((MC_NDFS2S)t.getStore()).red.get())
+			if (color.get().containsKey(t) && color.get().get(t) != Color.PINK && !((NEW)t.getStore()).red.get())
 				dfs_red(t);
 		}
 		if (s.isAccepting()) {
-			((MC_NDFS2S)s.getStore()).count.getAndDecrement();
-			AtomicInteger target = ((MC_NDFS2S)s.getStore()).count;
+			((NEW)s.getStore()).count.getAndDecrement();
+			AtomicInteger target = ((NEW)s.getStore()).count;
 			while (target.get() > 0 && !hasCycle) {}
 		}
-		((MC_NDFS2S)s.getStore()).red.set(true);
+		((NEW)s.getStore()).red.set(true);
 		
 	}
 }

@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import node.*;
 
@@ -13,12 +14,19 @@ public class MC_CNDFS_Thread extends Thread {
 	private int id;
 	private Node graph;
 	private AtomicBoolean finished;
+	ThreadLocal<HashSet<Node>> cyan;
 
 	private static volatile boolean hasCycle = false;
 	
 	public MC_CNDFS_Thread(Node graph, AtomicBoolean b) {
 		id = ID_GEN++;
 		this.graph = graph;
+		cyan = ThreadLocal.withInitial(new Supplier<HashSet<Node>>() {
+			@Override
+			public HashSet<Node> get() {
+				return new HashSet<Node>();
+			}
+		});
 		finished = b;
 	}
 
@@ -45,12 +53,12 @@ public class MC_CNDFS_Thread extends Thread {
 	private void dfs_blue(Node s) {
 		if (hasCycle)
 			return;
-		((MC_CNDFS)s.getStore()).cyan[id].set(true);
+		cyan.get().add(s);
 		
 		Iterator<Node> subNodes = s.post();
 		while (subNodes.hasNext()) {
 			Node t = subNodes.next();
-			if (!((MC_CNDFS)t.getStore()).cyan[id].get() && !((MC_CNDFS)t.getStore()).blue.get())
+			if (!cyan.get().contains(t) && !((MC_CNDFS)t.getStore()).blue.get())
 				dfs_blue(t);
 		}
 		((MC_CNDFS)s.getStore()).blue.set(true);
@@ -68,7 +76,7 @@ public class MC_CNDFS_Thread extends Thread {
 			while (it.hasNext() && !hasCycle)
 				((MC_CNDFS)(it.next().getStore())).red.set(true);
 		}
-		((MC_CNDFS)s.getStore()).cyan[id].set(false);
+		cyan.get().remove(s);
 	}
 
 	private void dfs_red(Node s, HashSet<Node> h) {
@@ -79,7 +87,7 @@ public class MC_CNDFS_Thread extends Thread {
 		Iterator<Node> subNodes = s.post();
 		while (subNodes.hasNext()) {
 			Node t = subNodes.next();
-			if (((MC_CNDFS)t.getStore()).cyan[id].get())
+			if (cyan.get().contains(t))
 			{
 				hasCycle = true;
 				return;

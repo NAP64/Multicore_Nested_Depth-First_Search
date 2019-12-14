@@ -1,15 +1,18 @@
 package node;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class MC_CNDFS
+public class NEW
 {
     public AtomicBoolean red;
+    public AtomicInteger count;
     public AtomicBoolean blue;
 
-    public MC_CNDFS(int n)
+    public NEW(int n)
     {
         red = new AtomicBoolean(false);
         blue = new AtomicBoolean(false);
+        count = new AtomicInteger(0);
     }
 }
