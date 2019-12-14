@@ -1,7 +1,7 @@
 package node;
 
 import java.util.Iterator;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 //Base class for nodes
 
@@ -85,7 +85,6 @@ public class Node implements Comparable<Node>, Iterable<Node> {
     {
         private boolean[] barray;
         int remain, cur;
-        Random r;
 
         public PostIterator()
         {
@@ -94,7 +93,6 @@ public class Node implements Comparable<Node>, Iterable<Node> {
                 barray[i] = true;
             remain = size;
             cur = -1;
-            r = new Random();
         }
 
         public boolean hasNext() {
@@ -105,7 +103,7 @@ public class Node implements Comparable<Node>, Iterable<Node> {
             if (!hasNext())
                 return null;
             cur++;
-            int i = r.nextInt(remain);
+            int i = ThreadLocalRandom.current().nextInt(remain);
             while (i > 0 || !barray[cur % size])
             {
                 if (barray[cur % size])
@@ -115,7 +113,7 @@ public class Node implements Comparable<Node>, Iterable<Node> {
             cur = cur % size;
             barray[cur] = false;
             remain--;
-            return array[cur];
+            return array[cur % size];
         }
 
     }

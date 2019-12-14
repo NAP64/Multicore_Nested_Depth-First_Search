@@ -2,6 +2,7 @@ package ndfs;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import node.*;
@@ -11,12 +12,14 @@ public class MC_NDFS2_Thread extends Thread {
 	
 	private int id;
 	private Node graph;
+	private AtomicBoolean finished;
 
 	private static volatile boolean hasCycle = false;
 	
-	public MC_NDFS2_Thread(Node graph) {
+	public MC_NDFS2_Thread(Node graph, AtomicBoolean b) {
 		id = ID_GEN++;
 		this.graph = graph;
+		finished = b;
 	}
 
 	public static void setup_graph(List<Node> graph, int n)
@@ -27,6 +30,7 @@ public class MC_NDFS2_Thread extends Thread {
 	
 	public void run() {
 		dfs_blue(graph);
+		finished.set(true);
 	}
 	
 	public static void reset() {
@@ -83,7 +87,7 @@ public class MC_NDFS2_Thread extends Thread {
 		if (s.isAccepting()) {
 			((MC_NDFS2S)s.getStore()).count.getAndDecrement();
 			AtomicInteger target = ((MC_NDFS2S)s.getStore()).count;
-			while (target.get() > 0) {}
+			while (target.get() > 0 && !hasCycle) {}
 		}
 		((MC_NDFS2S)s.getStore()).red.set(true);
 		

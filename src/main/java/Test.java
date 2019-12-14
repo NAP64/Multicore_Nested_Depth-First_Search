@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import node.*;
 import ndfs.*;
@@ -23,37 +24,38 @@ public class Test {
     {
     	if (args.length < 4) {
     		printUsage();
-    		System.exit(1);
+    		System.out.println("Running default:");
     	}
     	
-        int graph_size = Integer.parseInt(args[0]);
-		int thread_count = Integer.parseInt(args[1]);
-        int iterations = Integer.parseInt(args[2]);
-        int graphs = Integer.parseInt(args[3]);
+        int graph_size = args.length > 0 ? Integer.parseInt(args[0]) : 30000;
+		int thread_count = args.length > 1 ? Integer.parseInt(args[1]) : 16;
+        int iterations = args.length > 2 ? Integer.parseInt(args[2]) : 3;
+        int graphs = args.length > 3 ? Integer.parseInt(args[3]) : 100;
         //int graph_size = 30000;
         //int thread_count = 2;
         //int iterations = 3;
-        int extra_edge = 30;
-        int accept = 5;
+        //int extra_edge = 60;
+        //int accept = 5;
+        Random r = new Random();
 
 
         List<Node> graph;
 
-        long total01, total02, total03;
-        total01=total02=total03=0;
-        long total11, total12, total13;
-        total11=total12=total13=0;
+        long total01, total02, total03, total04;
+        total01=total02=total03=total04=0;
+        long total11, total12, total13, total14;
+        total11=total12=total13=total14=0;
         int count = 0;
 
         for (int k = 0; k < graphs; k++)
         {
-            long t1, t2, t3;
-            t1=t2=t3=0;
-            graph = genTree(graph_size, 70);
+            long t1, t2, t3, t4, t5;
+            t1=t2=t3=t4=t5=0;
+            graph = genTree(graph_size, r.nextInt(80)+20);
 
-            addEdge(graph, extra_edge);
-            addAccept(graph, accept);
-
+            addEdge(graph, r.nextInt(50)+10);
+            addAccept(graph, r.nextInt(30)+5);
+            
             for (int i=0; i<WARMUPS; i++) {
 		    	run(graph, thread_count);
 		    }
@@ -61,7 +63,7 @@ public class Test {
 		    for (int j=0; j<iterations; j++) {
 		    	t1+=run(graph, thread_count);
             }
-
+            /*
             for (int i=0; i<WARMUPS; i++) {
 		    	run1(graph, thread_count);
 		    }
@@ -69,20 +71,41 @@ public class Test {
 		    for (int j=0; j<iterations; j++) {
 		    	t2+=run1(graph, thread_count);
             }
-
+            */
             for (int i=0; i<WARMUPS; i++) {
-		    	run2(graph, 1);
+		    	run4(graph, 1);
 		    }
         
 		    for (int j=0; j<iterations; j++) {
-		    	t3+=run2(graph, 1);
+		    	t3+=run4(graph, 1);
             }
 
-            if (run3(graph,1))
+            for (int i=0; i<WARMUPS; i++) {
+		    	run4(graph, thread_count);
+		    }
+        
+		    for (int j=0; j<iterations; j++) {
+		    	t4+=run4(graph, thread_count);
+            }
+            /*
+            for (int i=0; i<WARMUPS; i++) {
+		    	run5(graph, thread_count);
+		    }
+        
+		    for (int j=0; j<iterations; j++) {
+		    	t5+=run5(graph, thread_count);
+            }
+            */
+            boolean b = run3(graph,1);
+
+            System.out.println("" + b +"," + t3/1.0/graphs +"," + t4/1.0/graphs+"," + t1/1.0/graphs);// +"," + t1/1.0/count +"," + t2/1.0/count+"," + t5/1.0/count);
+
+            if (b)
             {
                 total01 += t1;
                 total02 += t2;
                 total03 += t3;
+                total04 += t4;
                 count++;
             }
             else
@@ -90,10 +113,11 @@ public class Test {
                 total11 += t1;
                 total12 += t2;
                 total13 += t3;
+                total14 += t4;
             }
         }
-        System.out.println(total01/1.0/count+","+total02/1.0/count+","+total03/1.0/count);
-        System.out.println(total11/1.0/(graphs - count)+","+total12/1.0/(graphs - count)+","+total13/1.0/(graphs - count));
+        //System.out.println(total01/1.0/count+","+total02/1.0/count+","+total03/1.0/count+","+total04/1.0/count);
+        //System.out.println(total11/1.0/(graphs - count)+","+total12/1.0/(graphs - count)+","+total13/1.0/(graphs - count)+","+total14/1.0/(graphs - count));
 /*  
         System.out.println(" ");
         for (int j = 0; j < 100; j++)
@@ -131,22 +155,25 @@ public class Test {
         MC_NDFS_Thread[] threads = new MC_NDFS_Thread[thread_count];
         MC_NDFS_Thread.reset();
         MC_NDFS_Thread.setup_graph(graph, thread_count);
+        AtomicBoolean b = new AtomicBoolean(false);
 
         for (int i=0; i<thread_count; i++) {
-			threads[i] = new MC_NDFS_Thread(graph.get(0));
+			threads[i] = new MC_NDFS_Thread(graph.get(0), b);
 		}
 		
+		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].start();
         }
         
+        while (b.get() == false) {}
+		long endTime = System.currentTimeMillis();
+
 		boolean hasCycle = false;
-		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].join();
 			hasCycle = hasCycle || threads[i].hasCycle();
 		}
-		long endTime = System.currentTimeMillis();
 		/*
 		if (hasCycle) 
 			System.out.println("Cycle detected. Runtime = "+(endTime-startTime)+" ms");
@@ -162,22 +189,25 @@ public class Test {
         MC_NDFS2_Thread[] threads = new MC_NDFS2_Thread[thread_count];
         MC_NDFS2_Thread.reset();
         MC_NDFS2_Thread.setup_graph(graph, thread_count);
+        AtomicBoolean b = new AtomicBoolean(false);
 
         for (int i=0; i<thread_count; i++) {
-			threads[i] = new MC_NDFS2_Thread(graph.get(0));
+			threads[i] = new MC_NDFS2_Thread(graph.get(0), b);
 		}
 		
+		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].start();
         }
         
+        while (b.get() == false) {}
+		long endTime = System.currentTimeMillis();
+
 		boolean hasCycle = false;
-		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].join();
 			hasCycle = hasCycle || threads[i].hasCycle();
 		}
-		long endTime = System.currentTimeMillis();
 		/*
 		if (hasCycle) 
 			System.out.println("Cycle detected. Runtime = "+(endTime-startTime)+" ms");
@@ -193,22 +223,25 @@ public class Test {
         RB1_Thread[] threads = new RB1_Thread[thread_count];
         RB1_Thread.reset();
         RB1_Thread.setup_graph(graph);
+        AtomicBoolean b = new AtomicBoolean(false);
 
         for (int i=0; i<thread_count; i++) {
-			threads[i] = new RB1_Thread(graph.get(0));
+			threads[i] = new RB1_Thread(graph.get(0), b);
 		}
 		
+		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].start();
         }
         
+        while (b.get() == false) {}
+		long endTime = System.currentTimeMillis();
+        
 		boolean hasCycle = false;
-		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].join();
 			hasCycle = hasCycle || threads[i].hasCycle();
 		}
-		long endTime = System.currentTimeMillis();
 		/*
 		if (hasCycle) 
 			System.out.println("Cycle detected. Runtime = "+(endTime-startTime)+" ms");
@@ -224,22 +257,25 @@ public class Test {
         RB1_Thread[] threads = new RB1_Thread[thread_count];
         RB1_Thread.reset();
         RB1_Thread.setup_graph(graph);
+        AtomicBoolean b = new AtomicBoolean(false);
 
         for (int i=0; i<thread_count; i++) {
-			threads[i] = new RB1_Thread(graph.get(0));
+			threads[i] = new RB1_Thread(graph.get(0), b);
 		}
 		
+		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].start();
         }
         
+        while (b.get() == false) {}
+		long endTime = System.currentTimeMillis();
+        
 		boolean hasCycle = false;
-		long startTime = System.currentTimeMillis();
 		for (int i=0; i<thread_count; i++) {
 			threads[i].join();
 			hasCycle = hasCycle || threads[i].hasCycle();
 		}
-		long endTime = System.currentTimeMillis();
 		/*
 		if (hasCycle) 
 			System.out.println("Cycle detected. Runtime = "+(endTime-startTime)+" ms");
@@ -248,6 +284,62 @@ public class Test {
             */
         return hasCycle;
 
+    }
+
+    
+    private static long run4(List<Node> graph, int thread_count) throws InterruptedException
+    {
+        RB2_Thread[] threads = new RB2_Thread[thread_count];
+        RB2_Thread.reset();
+        RB2_Thread.setup_graph(graph, thread_count);
+        AtomicBoolean b = new AtomicBoolean(false);
+
+        for (int i=0; i<thread_count; i++) {
+			threads[i] = new RB2_Thread(graph.get(0), b);
+		}
+		
+		long startTime = System.currentTimeMillis();
+		for (int i=0; i<thread_count; i++) {
+			threads[i].start();
+        }
+        
+        while (b.get() == false) {}
+		long endTime = System.currentTimeMillis();
+        
+		boolean hasCycle = false;
+		for (int i=0; i<thread_count; i++) {
+			threads[i].join();
+			hasCycle = hasCycle || threads[i].hasCycle();
+		}
+        return endTime-startTime;
+    }
+
+    
+    private static long run5(List<Node> graph, int thread_count) throws InterruptedException
+    {
+        MC_CNDFS_Thread[] threads = new MC_CNDFS_Thread[thread_count];
+        MC_CNDFS_Thread.reset();
+        MC_CNDFS_Thread.setup_graph(graph, thread_count);
+        AtomicBoolean b = new AtomicBoolean(false);
+
+        for (int i=0; i<thread_count; i++) {
+			threads[i] = new MC_CNDFS_Thread(graph.get(0), b);
+		}
+		
+		long startTime = System.currentTimeMillis();
+		for (int i=0; i<thread_count; i++) {
+			threads[i].start();
+        }
+        
+        while (b.get() == false) {}
+		long endTime = System.currentTimeMillis();
+        
+		boolean hasCycle = false;
+		for (int i=0; i<thread_count; i++) {
+			threads[i].join();
+			hasCycle = hasCycle || threads[i].hasCycle();
+		}
+        return endTime-startTime;
     }
 
     // head is at index 0
@@ -263,6 +355,23 @@ public class Test {
             while (cur.getSize() > 1 && r.nextInt(100) < passPercent)
                 cur = (Node)cur.getArray()[r.nextInt(cur.getSize())];
                 Node n = new Node(false);
+            ll.add(n);
+            cur.add(n);
+        }
+        return ll;
+    }
+
+    
+    public static List<Node> genTree2(int count, int passPercent)
+    {
+        Node head = new Node(false);
+        ArrayList<Node> ll = new ArrayList<Node>(count);
+        ll.add(head);
+        Random r = new Random();
+        for (int i = 0; i < count; i++)
+        {
+            Node cur = ll.get(r.nextInt(ll.size()));
+            Node n = new Node(false);
             ll.add(n);
             cur.add(n);
         }

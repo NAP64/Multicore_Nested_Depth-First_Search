@@ -1,30 +1,39 @@
 package ndfs;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import node.*;
 
-public class RB1_Thread extends Thread {
+public class RB2_Thread extends Thread {
 	private static int ID_GEN=0;
 	
 	private int id;
 	private Node graph;
 	private AtomicBoolean finished;
+	ThreadLocal<HashMap<Node, Color>> h;
 
 	private static volatile boolean hasCycle = false;
 	
-	public RB1_Thread(Node graph, AtomicBoolean b) {
+	public RB2_Thread(Node graph, AtomicBoolean b) {
 		id = ID_GEN++;
 		this.graph = graph;
+		h = ThreadLocal.withInitial(new Supplier<HashMap<Node, Color>>() {
+			@Override
+			public HashMap<Node, Color> get() {
+				return new HashMap<Node, Color>();
+			}
+		});
 		finished = b;
 	}
 
-	public static void setup_graph(List<Node> graph)
+	public static void setup_graph(List<Node> graph, int n)
 	{
 		for (Node i : graph)
-			i.setup(new RB1Store());
+			i.setup(new RB2Store(n));
 	}
 	
 	public void run() {
@@ -44,21 +53,21 @@ public class RB1_Thread extends Thread {
 	private void dfs_blue(Node s) {
 		if (hasCycle)
 			return;
-		((RB1Store)s.getStore()).c.set(Color.CYAN);
+		h.get().put(s, Color.CYAN);
 		Iterator<Node> it = s.post();
 		while (it.hasNext())
 		{
 			Node cur = (Node)it.next();
-			if (((RB1Store)cur.getStore()).c.get() == Color.WHITE)
+			if (!h.get().containsKey(cur))
 				dfs_blue(cur);
 		}
 		if (s.isAccepting())
 		{
 			dfs_red(s);
-			((RB1Store)s.getStore()).c.set(Color.RED);
+			h.get().put(s, Color.RED);
 		}
 		else
-			((RB1Store)s.getStore()).c.set(Color.BLUE);
+			h.get().put(s, Color.BLUE);
 	}
 	
 	private void dfs_red(Node s) {
@@ -68,11 +77,11 @@ public class RB1_Thread extends Thread {
 		while (it.hasNext())
 		{
 			Node cur = (Node)it.next();
-			if (((RB1Store)cur.getStore()).c.get() == Color.CYAN)
+			if (h.get().containsKey(cur) && h.get().get(cur) == Color.CYAN)
 				hasCycle = true;
-			else if (((RB1Store)cur.getStore()).c.get() == Color.BLUE)
+			else if (h.get().containsKey(cur) && h.get().get(cur) == Color.BLUE)
 			{
-				((RB1Store)cur.getStore()).c.set(Color.RED);
+				h.get().put(s, Color.RED);
 				dfs_red(cur);
 			}
 		}
